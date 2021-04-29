@@ -105,11 +105,15 @@ function Let(vars, expr) {
       return wrapValues(item)
     })
   } else {
-    bindings = Object.keys(vars).map(function(k) {
-      var b = {}
-      b[k] = wrap(vars[k])
-      return b
-    })
+    bindings = Object.keys(vars)
+      .filter(function(k) {
+        return vars[k] !== undefined
+      })
+      .map(function(k) {
+        var b = {}
+        b[k] = wrap(vars[k])
+        return b
+      })
   }
 
   if (typeof expr === 'function') {
@@ -2987,7 +2991,7 @@ arity.between = function(min, max, args, callerFunc) {
 function params(mainParams, optionalParams) {
   for (var key in optionalParams) {
     var val = optionalParams[key]
-    if (val !== null) {
+    if (val !== null && val !== undefined) {
       mainParams[key] = val
     }
   }

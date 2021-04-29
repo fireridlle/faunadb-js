@@ -1,6 +1,8 @@
+import { fetch } from 'cross-fetch'
+import { errors } from './errors'
 import Expr from './Expr'
-import { ExprArg } from './query'
 import PageHelper from './PageHelper'
+import { ExprArg } from './query'
 import RequestResult from './RequestResult'
 import { Subscription } from './Stream'
 
@@ -12,15 +14,30 @@ export interface ClientConfig {
   scheme?: 'http' | 'https'
   port?: number
   timeout?: number
-  observer?: (res: RequestResult, client: Client) => void
+  queryTimeout?: number
+  observer?: <T extends object = object>(
+    res: RequestResult<T | errors.FaunaHTTPError>,
+    client: Client
+  ) => void
   keepAlive?: boolean
   headers?: { [key: string]: string | number }
   fetch?: typeof fetch
 }
 
-export interface QueryOptions {
-  secret?: string
-  queryTimeout?: number
+export interface QueryOptions
+  extends Partial<
+    Pick<ClientConfig, 'secret' | 'queryTimeout' | 'fetch' | 'observer'>
+  > {}
+
+type StreamFn = (
+  expr: Expr,
+  options?: {
+    fields?: StreamEventFields[]
+  }
+) => Subscription
+
+interface StreamApi extends StreamFn {
+  document: StreamFn
 }
 
 export default class Client {
@@ -28,5 +45,5 @@ export default class Client {
   query<T = object>(expr: ExprArg, options?: QueryOptions): Promise<T>
   paginate(expr: Expr, params?: object, options?: QueryOptions): PageHelper
   ping(scope?: string, timeout?: number): Promise<string>
-  stream(expr: Expr, options?: { fields?: StreamEventFields[] }): Subscription
+  stream: StreamApi
 }
